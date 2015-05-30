@@ -126,7 +126,8 @@ environment =
           $ insert "car"            (Native car)           
           $ insert "cdr"            (Native cdr)
           $ insert "eqv?"           (Native equivalence)     
-          $ insert "comment"        (Native comment)                     
+          $ insert "comment"        (Native comment) 
+          $ insert "cons"           (Native cons)                     
             empty
 
 type StateT = Map String LispVal
@@ -228,6 +229,12 @@ equivalence ((List []):(List []):[]) = Bool True
 equivalence ((List (a:ar)):(List (b:br)):[]) = Bool (getBool (equivalence [a, b]) && getBool(equivalence [(List ar), (List br)]))
 equivalence ((DottedList a ar):(DottedList b br):[]) = Bool (getBool(equivalence [(List a),(List b)]) && getBool(equivalence [ar, br]))
 equivalence ((_):(_):[]) = Bool False
+
+cons :: [LispVal] -> LispVal
+cons (a:(List []):[]) = List [a]
+cons (a:(List ar):[]) =  List (a:ar)
+cons (a:(DottedList ar v):[]) = DottedList (a:ar) v
+cons _ = Error "wrong arguments at cons"
 
 -----------------------------------------------------------
 --                     main FUNCTION                     --
