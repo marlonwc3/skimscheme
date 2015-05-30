@@ -125,7 +125,8 @@ environment =
           $ insert "-"              (Native numericSub) 
           $ insert "car"            (Native car)           
           $ insert "cdr"            (Native cdr)
-          $ insert "eqv?"           (Native equivalence)           
+          $ insert "eqv?"           (Native equivalence)     
+          $ insert "comment"        (Native comment)                     
             empty
 
 type StateT = Map String LispVal
@@ -152,6 +153,9 @@ instance Monad StateTransformer where
 -- Includes some auxiliary functions. Does not include functions that modify
 -- state. These functions, such as define and set!, must run within the
 -- StateTransformer monad. 
+
+comment  :: [LispVal] -> LispVal
+comment _ = List []
 
 car :: [LispVal] -> LispVal
 car [List (a:as)] = a
