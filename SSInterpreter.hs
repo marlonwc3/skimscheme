@@ -124,7 +124,8 @@ environment =
           $ insert "*"              (Native numericMult) 
           $ insert "-"              (Native numericSub) 
           $ insert "car"            (Native car)           
-          $ insert "cdr"            (Native cdr)           
+          $ insert "cdr"            (Native cdr)
+          $ insert "eqv?"           (Native equivalence)           
             empty
 
 type StateT = Map String LispVal
@@ -210,6 +211,19 @@ onlyNumbers ns = False
 unpackNum :: LispVal -> Integer
 unpackNum (Number n) = n
 --- unpackNum a = ... -- Should never happen!!!!
+
+getBool :: LispVal -> Bool  
+getBool (Bool x) = x
+
+equivalence :: [LispVal] -> LispVal
+equivalence ((Bool x):(Bool y):[]) = Bool (x == y)
+equivalence ((Atom x):(Atom y):[]) = Bool (x == y)
+equivalence ((Number x):(Number y):[]) = Bool (x == y)
+equivalence ((String x):(String y):[]) = Bool (x == y)
+equivalence ((List []):(List []):[]) = Bool True
+equivalence ((List (a:ar)):(List (b:br)):[]) = Bool (getBool (equivalence [a, b]) && getBool(equivalence [(List ar), (List br)]))
+equivalence ((DottedList a ar):(DottedList b br):[]) = Bool (getBool(equivalence [(List a),(List b)]) && getBool(equivalence [ar, br]))
+equivalence ((_):(_):[]) = Bool False
 
 -----------------------------------------------------------
 --                     main FUNCTION                     --
