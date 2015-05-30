@@ -129,7 +129,8 @@ environment =
           $ insert "comment"        (Native comment) 
           $ insert "cons"           (Native cons) 
           $ insert "/"              (Native divide)
-          $ insert "mod"              (Native numericMod)                    
+          $ insert "mod"              (Native numericMod)  
+          $ insert "lt?"              (Native doLowerThen)                              
             empty
 
 type StateT = Map String LispVal
@@ -159,6 +160,18 @@ instance Monad StateTransformer where
 
 comment  :: [LispVal] -> LispVal
 comment _ = List []
+
+doLowerThen :: [LispVal] -> LispVal 
+doLowerThen l 
+	| not (onlyNumbers l) = Error "not a number."
+	| otherwise = lowerThan l
+
+
+lowerThan :: [LispVal] -> LispVal
+lowerThan (Number a:Number b:[])  = Bool (a < b)
+lowerThan (Number a:Number b:ls)  = Error "too many arguments"
+lowerThan _ = Error "too few arguments"
+
 
 car :: [LispVal] -> LispVal
 car [List (a:as)] = a
