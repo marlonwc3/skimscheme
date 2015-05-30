@@ -127,7 +127,8 @@ environment =
           $ insert "cdr"            (Native cdr)
           $ insert "eqv?"           (Native equivalence)     
           $ insert "comment"        (Native comment) 
-          $ insert "cons"           (Native cons)                     
+          $ insert "cons"           (Native cons) 
+          $ insert "/"              (Native divide)                    
             empty
 
 type StateT = Map String LispVal
@@ -235,6 +236,10 @@ cons (a:(List []):[]) = List [a]
 cons (a:(List ar):[]) =  List (a:ar)
 cons (a:(DottedList ar v):[]) = DottedList (a:ar) v
 cons _ = Error "wrong arguments at cons"
+
+divide :: [LispVal] -> LispVal
+divide ((Number x):(Number y):[]) = numericBinOp (div) ((Number x):(Number y):[])
+divide _ = Error "wrongs arguments at divide"
 
 -----------------------------------------------------------
 --                     main FUNCTION                     --
