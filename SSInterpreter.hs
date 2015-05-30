@@ -239,6 +239,7 @@ cons (a:(DottedList ar v):[]) = DottedList (a:ar) v
 cons _ = Error "wrong arguments at cons"
 
 divide :: [LispVal] -> LispVal
+divide ((Number x):[]) = numericBinOp (div) ((Number 1):(Number x):[])
 divide ((Number x):(Number y):[]) = numericBinOp (div) ((Number x):(Number y):[])
 divide _ = Error "wrongs arguments at divide"
 
