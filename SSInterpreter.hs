@@ -129,8 +129,8 @@ environment =
           $ insert "comment"        (Native comment) 
           $ insert "cons"           (Native cons) 
           $ insert "/"              (Native divide)
-          $ insert "mod"              (Native numericMod)  
-          $ insert "lt?"              (Native doLowerThen)                              
+          $ insert "mod"            (Native numericMod)  
+          $ insert "lt?"            (Native doLowerThen)                              
             empty
 
 type StateT = Map String LispVal
@@ -251,14 +251,21 @@ cons (a:(List ar):[]) =  List (a:ar)
 cons (a:(DottedList ar v):[]) = DottedList (a:ar) v
 cons _ = Error "wrong arguments at cons"
 
+hasZero :: [LispVal] -> Bool
+hasZero [] = False
+hasZero ((Number a):ar) = (a == 0) && hasZero (ar)
+
 divide :: [LispVal] -> LispVal
-divide ((Number x):[]) = numericBinOp (div) ((Number 1):(Number x):[])
-divide ((Number x):(Number y):[]) = numericBinOp (div) ((Number x):(Number y):[])
-divide _ = Error "wrongs arguments at divide"
+divide [] = Error "wrong number of arguments, expected: (2 or 1) got: 0"
+divide [(Number a)] = Number (div 1 a)
+divide l =  if hasZero l then Error "list has a zero."
+                  else numericBinOp (div) l
 
 numericMod :: [LispVal] -> LispVal
-numericMod ((Number x):(Number y):[]) = numericBinOp (mod) ((Number x):(Number y):[])
-numericMod _ = Error "wrongs arguments at divide"
+numericMod [] = Error "wrong number of arguments, expected: 2 got: 0"
+numericMod [(Number a)] = Error "wrong number of arguments, expected: 2 got: 1 "
+numericMod l = if hasZero l then Error "list has a zero."
+                  else numericBinOp (mod) l
 -----------------------------------------------------------
 --                     main FUNCTION                     --
 -----------------------------------------------------------
