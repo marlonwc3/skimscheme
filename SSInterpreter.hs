@@ -47,6 +47,22 @@ eval env val@(Bool _) = return val
 eval env (List [Atom "quote", val]) = return val
 eval env (List (Atom "begin":[v])) = eval env v
 
+eval env (List (Atom "let":(List vars):exp:[]) ) = 
+  case (analyseLet vars) of {
+  	"INCORRECT" -> return $ Error "[let] Incorrect pattern of attribution";
+  	"DUPLICATED" -> return $ Error "[let] Duplicated var attribution";
+  	otherwise ->  ST (\s -> 
+  		let current = union env s;
+		    extended = prepareState current env vars; -- (env + state until let) + let definitions
+		    (ST f) = eval extended exp; 
+		    (result, newst) = f s; -- state after let execution
+		    afterst = union (difference newst extended) current; -- this removes all variables that were defined on the let procedure
+		in (result, afterst)
+  	);
+}
+  
+eval env (List (Atom "let":_:_:[])) = return $ Error "[let] Wrong arguments"
+
 eval env (List (Atom "if" : exp : true : false:[] ) ) = (eval env exp) >>= (\v -> case v of {
 	(error@(Error _))  -> return error;
 	(Bool True) -> eval env true;
@@ -78,6 +94,32 @@ stateLookup env var = ST $
            id (Map.lookup var (union s env) 
     ), s))
 
+dupplicatedAtom :: [LispVal] -> [String] -> Bool
+dupplicatedAtom [] already = False 
+dupplicatedAtom ((List ((Atom v):val:[]):ls)) already 
+	| elem v already = True
+	| otherwise = dupplicatedAtom ls (already++[v])
+	
+
+attributionCorrect :: [LispVal] -> Bool
+attributionCorrect ((List ((Atom v):val:[]):[])) = True
+attributionCorrect ((List ((Atom v):val:[]):ls)) =  attributionCorrect ls
+attributionCorrect _ = False
+
+analyseLet :: [LispVal] -> String
+analyseLet attributions 
+	| not (attributionCorrect attributions) = "INCORRECT"
+ 	| dupplicatedAtom attributions [] = "DUPLICATED"
+ 	| otherwise = "OKAY"
+
+ 
+prepareState :: StateT -> StateT -> [LispVal] -> StateT
+prepareState env1 env2 ((List ((Atom id):val:[]):[])) = insert id (valFromST (eval env1 val) env1) env2
+prepareState env1 env2 ((List ((Atom id):val:[]):ls)) = prepareState env1 (insert id (valFromST (eval env1 val) env1) env2) ls
+
+
+valFromST :: StateTransformer LispVal -> StateT -> LispVal
+valFromST (ST f) env = fst (f env)
 
 -- Because of monad complications, define is a separate function that is not
 -- included in the state of the program. This saves  us from having to make
